@@ -1,0 +1,17 @@
+{
+  "name": "thportal-backend",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "A THPortal társasházkezelő backendje (Node.js + Express + SQLite).",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "node --watch src/server.js",
+    "db:show": "node src/db-show.js"
+  },
+  "dependencies": {
+    "better-sqlite3": "^12.4.1",
+    "express": "^5.1.0"
+  }
+}
