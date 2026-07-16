@@ -114,82 +114,126 @@ export function EgyenlegReszletezo({
         </div>
       </div>
 
-      <div className="overflow-x-auto rounded-lg border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
-        <table className="w-full min-w-[720px] text-left text-sm">
-          <thead>
-            <tr className="border-b border-slate-200 bg-slate-50 text-xs uppercase tracking-wide text-slate-500 dark:border-slate-800 dark:bg-slate-800/50 dark:text-slate-400">
-              <th className="px-4 py-2.5 font-medium">Dátum</th>
-              <th className="px-4 py-2.5 font-medium">Megnevezés</th>
-              <th className="px-4 py-2.5 text-right font-medium">Előírás</th>
-              <th className="px-4 py-2.5 text-right font-medium">Befizetés</th>
-              <th className="px-4 py-2.5 text-right font-medium">Görgetett egyenleg</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-            {sorok.length === 0 ? (
-              <tr>
-                <td
-                  colSpan={5}
-                  className="px-4 py-6 text-center text-slate-500 dark:text-slate-400"
-                >
-                  Ehhez az albetéthez még nincs folyószámla-tétel.
-                </td>
-              </tr>
-            ) : (
-              sorok.map(({ tetel, gorgetettEgyenleg }) => (
-                <tr key={tetel.id}>
-                  <td className="px-4 py-3 whitespace-nowrap text-slate-600 dark:text-slate-300">
-                    {formatDatum(tetel.datum)}
-                  </td>
-                  <td className="px-4 py-3">
-                    <span
-                      className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${
-                        tetel.tipus === 'eloiras'
-                          ? 'bg-red-100 text-red-700 dark:bg-red-500/10 dark:text-red-300'
-                          : 'bg-green-100 text-green-700 dark:bg-green-500/10 dark:text-green-300'
-                      }`}
-                    >
-                      {tetel.tipus === 'eloiras' ? 'Előírás' : 'Befizetés'}
-                    </span>
-                    {tetel.megjegyzes && (
-                      <span className="ml-2 text-slate-500 dark:text-slate-400">
-                        {tetel.megjegyzes}
+      {sorok.length === 0 ? (
+        <div className="rounded-lg border border-slate-200 bg-white p-6 text-center text-sm text-slate-500 shadow-sm dark:border-slate-800 dark:bg-slate-900 dark:text-slate-400">
+          Ehhez az albetéthez még nincs folyószámla-tétel.
+        </div>
+      ) : (
+        <>
+          {/* Nagy képernyőn táblázat */}
+          <div className="hidden overflow-x-auto rounded-lg border border-slate-200 bg-white shadow-sm sm:block dark:border-slate-800 dark:bg-slate-900">
+            <table className="w-full min-w-[720px] text-left text-sm">
+              <thead>
+                <tr className="border-b border-slate-200 bg-slate-50 text-xs uppercase tracking-wide text-slate-500 dark:border-slate-800 dark:bg-slate-800/50 dark:text-slate-400">
+                  <th className="px-4 py-2.5 font-medium">Dátum</th>
+                  <th className="px-4 py-2.5 font-medium">Megnevezés</th>
+                  <th className="px-4 py-2.5 text-right font-medium">Előírás</th>
+                  <th className="px-4 py-2.5 text-right font-medium">Befizetés</th>
+                  <th className="px-4 py-2.5 text-right font-medium">Görgetett egyenleg</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                {sorok.map(({ tetel, gorgetettEgyenleg }) => (
+                  <tr key={tetel.id}>
+                    <td className="px-4 py-3 whitespace-nowrap text-slate-600 dark:text-slate-300">
+                      {formatDatum(tetel.datum)}
+                    </td>
+                    <td className="px-4 py-3">
+                      <span
+                        className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${
+                          tetel.tipus === 'eloiras'
+                            ? 'bg-red-100 text-red-700 dark:bg-red-500/10 dark:text-red-300'
+                            : 'bg-green-100 text-green-700 dark:bg-green-500/10 dark:text-green-300'
+                        }`}
+                      >
+                        {tetel.tipus === 'eloiras' ? 'Előírás' : 'Befizetés'}
                       </span>
-                    )}
+                      {tetel.megjegyzes && (
+                        <span className="ml-2 text-slate-500 dark:text-slate-400">
+                          {tetel.megjegyzes}
+                        </span>
+                      )}
+                    </td>
+                    <td className="px-4 py-3 text-right whitespace-nowrap text-slate-700 dark:text-slate-200">
+                      {tetel.tipus === 'eloiras' ? formatForint(tetel.osszeg) : '—'}
+                    </td>
+                    <td className="px-4 py-3 text-right whitespace-nowrap text-slate-700 dark:text-slate-200">
+                      {tetel.tipus === 'befizetes' ? formatForint(tetel.osszeg) : '—'}
+                    </td>
+                    <td
+                      className={`px-4 py-3 text-right whitespace-nowrap font-medium ${egyenlegSzin(gorgetettEgyenleg)}`}
+                    >
+                      {formatEgyenleg(gorgetettEgyenleg)}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+              <tfoot>
+                <tr className="border-t border-slate-200 bg-slate-50 font-semibold dark:border-slate-800 dark:bg-slate-800/50">
+                  <td className="px-4 py-3 text-slate-900 dark:text-slate-100" colSpan={2}>
+                    Összesen
                   </td>
-                  <td className="px-4 py-3 text-right whitespace-nowrap text-slate-700 dark:text-slate-200">
-                    {tetel.tipus === 'eloiras' ? formatForint(tetel.osszeg) : '—'}
+                  <td className="px-4 py-3 text-right whitespace-nowrap text-slate-900 dark:text-slate-100">
+                    {formatForint(osszesEloiras)}
                   </td>
-                  <td className="px-4 py-3 text-right whitespace-nowrap text-slate-700 dark:text-slate-200">
-                    {tetel.tipus === 'befizetes' ? formatForint(tetel.osszeg) : '—'}
+                  <td className="px-4 py-3 text-right whitespace-nowrap text-slate-900 dark:text-slate-100">
+                    {formatForint(osszesBefizetes)}
                   </td>
                   <td
-                    className={`px-4 py-3 text-right whitespace-nowrap font-medium ${egyenlegSzin(gorgetettEgyenleg)}`}
+                    className={`px-4 py-3 text-right whitespace-nowrap ${egyenlegSzin(zaroEgyenleg)}`}
                   >
-                    {formatEgyenleg(gorgetettEgyenleg)}
+                    {formatEgyenleg(zaroEgyenleg)}
                   </td>
                 </tr>
-              ))
-            )}
-          </tbody>
-          <tfoot>
-            <tr className="border-t border-slate-200 bg-slate-50 font-semibold dark:border-slate-800 dark:bg-slate-800/50">
-              <td className="px-4 py-3 text-slate-900 dark:text-slate-100" colSpan={2}>
-                Összesen
-              </td>
-              <td className="px-4 py-3 text-right whitespace-nowrap text-slate-900 dark:text-slate-100">
-                {formatForint(osszesEloiras)}
-              </td>
-              <td className="px-4 py-3 text-right whitespace-nowrap text-slate-900 dark:text-slate-100">
-                {formatForint(osszesBefizetes)}
-              </td>
-              <td className={`px-4 py-3 text-right whitespace-nowrap ${egyenlegSzin(zaroEgyenleg)}`}>
-                {formatEgyenleg(zaroEgyenleg)}
-              </td>
-            </tr>
-          </tfoot>
-        </table>
-      </div>
+              </tfoot>
+            </table>
+          </div>
+
+          {/* Mobil nézetben kártyák */}
+          <ul className="space-y-3 sm:hidden">
+            {sorok.map(({ tetel, gorgetettEgyenleg }) => (
+              <li
+                key={tetel.id}
+                className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900"
+              >
+                <div className="flex items-center justify-between gap-3">
+                  <span className="text-sm text-slate-600 dark:text-slate-300">
+                    {formatDatum(tetel.datum)}
+                  </span>
+                  <span
+                    className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-medium ${
+                      tetel.tipus === 'eloiras'
+                        ? 'bg-red-100 text-red-700 dark:bg-red-500/10 dark:text-red-300'
+                        : 'bg-green-100 text-green-700 dark:bg-green-500/10 dark:text-green-300'
+                    }`}
+                  >
+                    {tetel.tipus === 'eloiras' ? 'Előírás' : 'Befizetés'}
+                  </span>
+                </div>
+
+                {tetel.megjegyzes && (
+                  <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
+                    {tetel.megjegyzes}
+                  </p>
+                )}
+
+                <div className="mt-2 flex items-center justify-between text-sm">
+                  <span className="text-slate-500 dark:text-slate-400">Összeg</span>
+                  <span className="font-medium text-slate-800 dark:text-slate-200">
+                    {formatForint(tetel.osszeg)}
+                  </span>
+                </div>
+                <div className="mt-1 flex items-center justify-between text-sm">
+                  <span className="text-slate-500 dark:text-slate-400">Görgetett egyenleg</span>
+                  <span className={`font-medium ${egyenlegSzin(gorgetettEgyenleg)}`}>
+                    {formatEgyenleg(gorgetettEgyenleg)}
+                  </span>
+                </div>
+              </li>
+            ))}
+          </ul>
+        </>
+      )}
 
       <p className="mt-3 text-xs text-slate-500 dark:text-slate-400">
         A negatív egyenleg tartozást, a pozitív túlfizetést jelöl.
