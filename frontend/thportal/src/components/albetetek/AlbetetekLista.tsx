@@ -24,7 +24,7 @@ export function AlbetetekLista() {
           Albetétek
         </h1>
         <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-          {albetetek.length} albetét a társasházban. Kattints egy sorra a hozzá tartozó lakók
+          {albetetek.length} db albetét van a társasházban. Kattints egy sorra a hozzá tartozó lakók
           megjelenítéséhez.
         </p>
       </header>
