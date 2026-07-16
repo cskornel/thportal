@@ -71,7 +71,7 @@ export function Bejelentkezes() {
             {(field) => (
               <div>
                 <label htmlFor={field.name} className={labelOsztaly}>
-                  E-mail-cím
+                  E-mail cím
                 </label>
                 <input
                   id={field.name}
