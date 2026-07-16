@@ -1,2 +1,2 @@
-# thportal
+# Társasházi portál
 thportal
