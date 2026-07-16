@@ -1,4 +1,5 @@
 import type { Albetet, EgyenlegTetel, Lako, RogzitesTipus } from '../model/albetetek/types'
+import type { Munkamenet } from '../model/auth/types'
 import type { Felhasznalo, Tarsashaz } from '../model/tarsashaz/types'
 import type { Hirdetmeny } from '../model/uzenofal/types'
 
@@ -31,8 +32,13 @@ export const getFelhasznalo = () => keres<Felhasznalo>('/felhasznalo')
 export const getKoltsegvetesiEv = () => keres<{ ev: number }>('/koltsegvetesi-ev')
 export const getLakok = () => keres<Lako[]>('/lakok')
 
+// --- Bejelentkezés ---
+export const postLogin = (email: string, jelszo: string) =>
+  keres<Munkamenet>('/login', { method: 'POST', body: JSON.stringify({ email, jelszo }) })
+
 // --- Albetétek / folyószámla ---
 export const getAlbetetek = () => keres<Albetet[]>('/albetetek')
+export const getAlbetet = (albetetId: number) => keres<Albetet>(`/albetetek/${albetetId}`)
 export const getAlbetetTetelek = (albetetId: number) =>
   keres<EgyenlegTetel[]>(`/albetetek/${albetetId}/tetelek`)
 

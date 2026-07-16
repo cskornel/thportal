@@ -2,8 +2,8 @@ import { createContext, useCallback, useContext, useEffect, useState } from 'rea
 import type { ReactNode } from 'react'
 import {
   deleteHirdetmeny,
+  getAlbetet,
   getAlbetetek,
-  getFelhasznalo,
   getHirdetmenyek,
   getKoltsegvetesiEv,
   getLakok,
@@ -16,6 +16,7 @@ import type { HirdetmenyAdat, UjTetelKeres } from '../api/client'
 import type { Albetet, EgyenlegTetel, Lako } from '../model/albetetek/types'
 import type { Felhasznalo, Tarsashaz } from '../model/tarsashaz/types'
 import type { Hirdetmeny } from '../model/uzenofal/types'
+import { useMunkamenet } from './MunkamenetContext'
 
 interface AdatContextErtek {
   tarsashaz: Tarsashaz
@@ -39,8 +40,8 @@ export function tetelHatasa(tetel: EgyenlegTetel): number {
 }
 
 export function AdatProvider({ children }: { children: ReactNode }) {
+  const { munkamenet } = useMunkamenet()
   const [tarsashaz, setTarsashaz] = useState<Tarsashaz | null>(null)
-  const [felhasznalo, setFelhasznalo] = useState<Felhasznalo | null>(null)
   const [koltsegvetesiEv, setKoltsegvetesiEv] = useState<number | null>(null)
   const [albetetek, setAlbetetek] = useState<Albetet[]>([])
   const [lakok, setLakok] = useState<Lako[]>([])
@@ -48,29 +49,42 @@ export function AdatProvider({ children }: { children: ReactNode }) {
   const [allapot, setAllapot] = useState<'toltes' | 'kesz' | 'hiba'>('toltes')
   const [hibaUzenet, setHibaUzenet] = useState('')
 
+  // A megjelenített felhasználó a bejelentkezett munkamenetből származik.
+  const felhasznalo: Felhasznalo | null = munkamenet
+    ? { nev: munkamenet.nev, email: munkamenet.email, szerepkor: munkamenet.szerepkor }
+    : null
+
   const betolt = useCallback(async () => {
+    if (!munkamenet) return
     setAllapot('toltes')
     try {
-      const [th, fh, ev, ab, lk, hd] = await Promise.all([
+      const [th, ev, hd] = await Promise.all([
         getTarsashaz(),
-        getFelhasznalo(),
         getKoltsegvetesiEv(),
-        getAlbetetek(),
-        getLakok(),
         getHirdetmenyek(),
       ])
+
+      if (munkamenet.szerep === 'kepviselo') {
+        // Közös képviselő: minden albetét és lakó.
+        const [ab, lk] = await Promise.all([getAlbetetek(), getLakok()])
+        setAlbetetek(ab)
+        setLakok(lk)
+      } else if (munkamenet.albetetId !== null) {
+        // Lakó: csak a saját albetétje.
+        const sajat = await getAlbetet(munkamenet.albetetId)
+        setAlbetetek([sajat])
+        setLakok([])
+      }
+
       setTarsashaz(th)
-      setFelhasznalo(fh)
       setKoltsegvetesiEv(ev.ev)
-      setAlbetetek(ab)
-      setLakok(lk)
       setHirdetmenyek(hd)
       setAllapot('kesz')
     } catch (error) {
       setHibaUzenet(error instanceof Error ? error.message : 'Ismeretlen hiba történt.')
       setAllapot('hiba')
     }
-  }, [])
+  }, [munkamenet])
 
   useEffect(() => {
     void betolt()

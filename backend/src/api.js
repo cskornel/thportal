@@ -35,6 +35,43 @@ const albetetEgyenleggel = db.prepare(`
   GROUP BY a.id
 `)
 
+// --- Bejelentkezés ---
+// Egyszerű, demó szintű hitelesítés: a jelszó mindig "admin".
+// admin@admin.com -> közös képviselő (teljes hozzáférés);
+// bármely lakó e-mail címe -> lakó (korlátozott hozzáférés).
+api.post('/login', (req, res) => {
+  const { email, jelszo } = req.body ?? {}
+
+  if (!email || jelszo !== 'admin') {
+    return res.status(401).json({ hiba: 'Hibás e-mail-cím vagy jelszó.' })
+  }
+
+  if (email === 'admin@admin.com') {
+    const fh = beallitas('felhasznalo')
+    return res.json({
+      szerep: 'kepviselo',
+      nev: fh?.nev ?? 'Közös képviselő',
+      email,
+      szerepkor: fh?.szerepkor ?? 'Közös képviselő',
+      albetetId: null,
+    })
+  }
+
+  const lako = db.prepare('SELECT * FROM lakok WHERE emailCim = ?').get(email)
+  if (lako) {
+    const jogviszonyok = JSON.parse(lako.jogviszonyok)
+    return res.json({
+      szerep: 'lako',
+      nev: lako.nev,
+      email,
+      szerepkor: jogviszonyok[0] ?? 'Lakó',
+      albetetId: lako.albetetId,
+    })
+  }
+
+  return res.status(401).json({ hiba: 'Hibás e-mail-cím vagy jelszó.' })
+})
+
 // --- Törzsadatok ---
 
 api.get('/tarsashaz', (_req, res) => res.json(beallitas('tarsashaz')))

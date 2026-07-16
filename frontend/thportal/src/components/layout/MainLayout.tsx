@@ -1,5 +1,6 @@
 import { Outlet } from 'react-router-dom'
 import { useAdat } from '../../context/AdatContext'
+import { useMunkamenet } from '../../context/MunkamenetContext'
 import { useTema } from '../../hooks/useTema'
 import { Fejlec } from './Fejlec'
 import { Oldalsav } from './Oldalsav'
@@ -7,6 +8,7 @@ import { Oldalsav } from './Oldalsav'
 export function MainLayout() {
   const { tema, valt } = useTema()
   const { tarsashaz, felhasznalo, koltsegvetesiEv } = useAdat()
+  const { kijelentkezes } = useMunkamenet()
 
   return (
     <div className="flex min-h-screen flex-col bg-slate-50 dark:bg-slate-950">
@@ -16,6 +18,7 @@ export function MainLayout() {
         koltsegvetesiEv={koltsegvetesiEv}
         tema={tema}
         onTemaValt={valt}
+        onKijelentkezes={kijelentkezes}
       />
 
       <div className="flex flex-1 flex-col sm:flex-row">

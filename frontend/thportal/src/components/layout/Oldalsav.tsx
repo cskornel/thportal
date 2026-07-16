@@ -1,12 +1,31 @@
 import { NavLink } from 'react-router-dom'
-import { menupontok } from '../../data/layout/menupontok'
+import { useMunkamenet } from '../../context/MunkamenetContext'
+
+interface Menupont {
+  cimke: string
+  utvonal: string
+}
 
 export function Oldalsav() {
+  const { munkamenet } = useMunkamenet()
+
+  const menupontok: Menupont[] =
+    munkamenet?.szerep === 'kepviselo'
+      ? [
+          { cimke: 'Albetét lista', utvonal: '/albetetek' },
+          { cimke: 'Befizetések', utvonal: '/befizetesek' },
+          { cimke: 'Üzenőfal', utvonal: '/uzenofal' },
+        ]
+      : [
+          { cimke: 'Folyószámla', utvonal: `/albetetek/${munkamenet?.albetetId}/egyenleg` },
+          { cimke: 'Üzenőfal', utvonal: '/uzenofal' },
+        ]
+
   return (
     <nav className="w-full shrink-0 border-b border-slate-200 bg-white p-3 sm:w-56 sm:border-r sm:border-b-0 dark:border-slate-800 dark:bg-slate-900">
       <ul className="flex gap-1 sm:flex-col">
         {menupontok.map((menupont) => (
-          <li key={menupont.id}>
+          <li key={menupont.utvonal}>
             <NavLink
               to={menupont.utvonal}
               className={({ isActive }) =>

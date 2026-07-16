@@ -8,6 +8,7 @@ interface FejlecProps {
   koltsegvetesiEv: number
   tema: Tema
   onTemaValt: () => void
+  onKijelentkezes: () => void
 }
 
 function monogram(nev: string): string {
@@ -25,6 +26,7 @@ export function Fejlec({
   koltsegvetesiEv,
   tema,
   onTemaValt,
+  onKijelentkezes,
 }: FejlecProps) {
   return (
     <header className="flex items-center justify-between gap-4 border-b border-slate-200 bg-white px-4 py-3 sm:px-6 dark:border-slate-800 dark:bg-slate-900">
@@ -60,6 +62,14 @@ export function Fejlec({
         <div className="h-6 w-px bg-slate-200 dark:bg-slate-700" aria-hidden="true" />
 
         <TemaValto tema={tema} onValt={onTemaValt} />
+
+        <button
+          type="button"
+          onClick={onKijelentkezes}
+          className="rounded-md px-3 py-1.5 text-sm font-medium text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-800 dark:hover:text-slate-100"
+        >
+          Kijelentkezés
+        </button>
       </div>
     </header>
   )

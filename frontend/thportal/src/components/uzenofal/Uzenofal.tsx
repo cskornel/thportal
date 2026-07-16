@@ -25,7 +25,12 @@ function formatDatum(iso: string): string {
   return new Date(iso).toLocaleDateString('hu-HU')
 }
 
-export function Uzenofal() {
+interface UzenofalProps {
+  /** Lakói nézet: csak listázás, szerkesztés nélkül; csak a nyilvános hirdetmények. */
+  csakOlvasas?: boolean
+}
+
+export function Uzenofal({ csakOlvasas = false }: UzenofalProps) {
   const {
     hirdetmenyek,
     hirdetmenyHozzaadasa,
@@ -108,13 +113,18 @@ export function Uzenofal() {
     }
   }
 
-  const rendezett = [...hirdetmenyek].sort((a, b) =>
+  // Lakói nézetben csak a nyilvános hirdetmények látszanak.
+  const lathatoak = csakOlvasas
+    ? hirdetmenyek.filter((hirdetmeny) => hirdetmeny.lathatosag === 'nyilvanos')
+    : hirdetmenyek
+
+  const rendezett = [...lathatoak].sort((a, b) =>
     a.datum < b.datum ? 1 : a.datum > b.datum ? -1 : 0,
   )
 
   const szurtek = rendezett.filter(
     (hirdetmeny) =>
-      (lathatosagSzuro === 'mind' || hirdetmeny.lathatosag === lathatosagSzuro) &&
+      (csakOlvasas || lathatosagSzuro === 'mind' || hirdetmeny.lathatosag === lathatosagSzuro) &&
       (kategoriaSzuro === 'mind' || hirdetmeny.kategoria === kategoriaSzuro),
   )
 
@@ -127,19 +137,23 @@ export function Uzenofal() {
         <div>
           <h1 className="text-2xl font-semibold text-slate-900 dark:text-slate-100">Üzenőfal</h1>
           <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
-            A társasház hirdetményei. Új hirdetmény rögzítéséhez használd a gombot.
+            {csakOlvasas
+              ? 'A társasház hirdetményei.'
+              : 'A társasház hirdetményei. Új hirdetmény rögzítéséhez használd a gombot.'}
           </p>
         </div>
-        <button
-          type="button"
-          onClick={ujHirdetmeny}
-          className="shrink-0 rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-indigo-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500"
-        >
-          + Új hirdetmény
-        </button>
+        {!csakOlvasas && (
+          <button
+            type="button"
+            onClick={ujHirdetmeny}
+            className="shrink-0 rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-indigo-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500"
+          >
+            + Új hirdetmény
+          </button>
+        )}
       </header>
 
-      {urlapNyitva && (
+      {!csakOlvasas && urlapNyitva && (
         <div className="mb-6">
           <HirdetmenyForm
             key={szerkesztettId ?? 'uj'}
@@ -152,26 +166,28 @@ export function Uzenofal() {
       )}
 
       <div className="mb-4 flex flex-wrap items-end gap-4">
-        <div>
-          <label
-            htmlFor="lathatosag-szuro"
-            className="mb-1 block text-xs font-medium text-slate-600 dark:text-slate-400"
-          >
-            Láthatóság
-          </label>
-          <select
-            id="lathatosag-szuro"
-            value={lathatosagSzuro}
-            onChange={(event) =>
-              setLathatosagSzuro(event.target.value as HirdetmenyLathatosag | 'mind')
-            }
-            className={szuroInputOsztaly}
-          >
-            <option value="mind">Összes</option>
-            <option value="nyilvanos">Nyilvános</option>
-            <option value="rejtett">Rejtett</option>
-          </select>
-        </div>
+        {!csakOlvasas && (
+          <div>
+            <label
+              htmlFor="lathatosag-szuro"
+              className="mb-1 block text-xs font-medium text-slate-600 dark:text-slate-400"
+            >
+              Láthatóság
+            </label>
+            <select
+              id="lathatosag-szuro"
+              value={lathatosagSzuro}
+              onChange={(event) =>
+                setLathatosagSzuro(event.target.value as HirdetmenyLathatosag | 'mind')
+              }
+              className={szuroInputOsztaly}
+            >
+              <option value="mind">Összes</option>
+              <option value="nyilvanos">Nyilvános</option>
+              <option value="rejtett">Rejtett</option>
+            </select>
+          </div>
+        )}
         <div>
           <label
             htmlFor="kategoria-szuro"
@@ -196,7 +212,7 @@ export function Uzenofal() {
           </select>
         </div>
         <p className="ml-auto text-sm text-slate-500 dark:text-slate-400">
-          {szurtek.length} / {hirdetmenyek.length} hirdetmény
+          {szurtek.length} / {lathatoak.length} hirdetmény
         </p>
       </div>
 
@@ -208,14 +224,14 @@ export function Uzenofal() {
               <th className="px-4 py-2.5 font-medium">Cím</th>
               <th className="px-4 py-2.5 font-medium">Kategória</th>
               <th className="px-4 py-2.5 font-medium">Leírás</th>
-              <th className="px-4 py-2.5 text-right font-medium">Műveletek</th>
+              {!csakOlvasas && <th className="px-4 py-2.5 text-right font-medium">Műveletek</th>}
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
             {szurtek.length === 0 ? (
               <tr>
                 <td
-                  colSpan={5}
+                  colSpan={csakOlvasas ? 4 : 5}
                   className="px-4 py-6 text-center text-slate-500 dark:text-slate-400"
                 >
                   {hirdetmenyek.length === 0
@@ -236,15 +252,17 @@ export function Uzenofal() {
                     <p className="font-medium text-slate-900 dark:text-slate-100">
                       {hirdetmeny.cim}
                     </p>
-                    <span
-                      className={`mt-1 inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${
-                        hirdetmeny.lathatosag === 'nyilvanos'
-                          ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300'
-                          : 'bg-slate-200 text-slate-600 dark:bg-slate-700 dark:text-slate-300'
-                      }`}
-                    >
-                      {hirdetmeny.lathatosag === 'nyilvanos' ? 'Nyilvános' : 'Rejtett'}
-                    </span>
+                    {!csakOlvasas && (
+                      <span
+                        className={`mt-1 inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${
+                          hirdetmeny.lathatosag === 'nyilvanos'
+                            ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300'
+                            : 'bg-slate-200 text-slate-600 dark:bg-slate-700 dark:text-slate-300'
+                        }`}
+                      >
+                        {hirdetmeny.lathatosag === 'nyilvanos' ? 'Nyilvános' : 'Rejtett'}
+                      </span>
+                    )}
                   </td>
                   <td className="px-4 py-3">
                     <span
@@ -278,24 +296,26 @@ export function Uzenofal() {
                       )
                     })()}
                   </td>
-                  <td className="px-4 py-3">
-                    <div className="flex justify-end gap-2 whitespace-nowrap">
-                      <button
-                        type="button"
-                        onClick={() => szerkeszt(hirdetmeny.id)}
-                        className="rounded-md px-2.5 py-1 text-xs font-medium text-indigo-600 transition-colors hover:bg-indigo-50 dark:text-indigo-400 dark:hover:bg-indigo-950/40"
-                      >
-                        Módosítás
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => torol(hirdetmeny.id)}
-                        className="rounded-md px-2.5 py-1 text-xs font-medium text-red-600 transition-colors hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-950/40"
-                      >
-                        Törlés
-                      </button>
-                    </div>
-                  </td>
+                  {!csakOlvasas && (
+                    <td className="px-4 py-3">
+                      <div className="flex justify-end gap-2 whitespace-nowrap">
+                        <button
+                          type="button"
+                          onClick={() => szerkeszt(hirdetmeny.id)}
+                          className="rounded-md px-2.5 py-1 text-xs font-medium text-indigo-600 transition-colors hover:bg-indigo-50 dark:text-indigo-400 dark:hover:bg-indigo-950/40"
+                        >
+                          Módosítás
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => torol(hirdetmeny.id)}
+                          className="rounded-md px-2.5 py-1 text-xs font-medium text-red-600 transition-colors hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-950/40"
+                        >
+                          Törlés
+                        </button>
+                      </div>
+                    </td>
+                  )}
                 </tr>
               ))
             )}

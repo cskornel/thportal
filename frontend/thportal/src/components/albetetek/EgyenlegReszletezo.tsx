@@ -6,6 +6,8 @@ interface EgyenlegReszletezoProps {
   albetet: Albetet
   tetelek: EgyenlegTetel[]
   dijfizeto: string
+  /** Csak akkor jelenik meg a "Vissza az albetét listához" link, ha van albetét lista (közös képviselő). */
+  mutatVissza: boolean
 }
 
 const forintFormatter = new Intl.NumberFormat('hu-HU', {
@@ -37,7 +39,12 @@ function formatDatum(iso: string): string {
 // Azonos dátumon az előírás kerül előre, majd a befizetés.
 const TIPUS_SORREND: Record<EgyenlegTetel['tipus'], number> = { eloiras: 0, befizetes: 1 }
 
-export function EgyenlegReszletezo({ albetet, tetelek, dijfizeto }: EgyenlegReszletezoProps) {
+export function EgyenlegReszletezo({
+  albetet,
+  tetelek,
+  dijfizeto,
+  mutatVissza,
+}: EgyenlegReszletezoProps) {
   const osszesEloiras = tetelek
     .filter((tetel) => tetel.tipus === 'eloiras')
     .reduce((osszeg, tetel) => osszeg + tetel.osszeg, 0)
@@ -59,19 +66,21 @@ export function EgyenlegReszletezo({ albetet, tetelek, dijfizeto }: EgyenlegResz
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6 lg:px-8">
-      <Link
-        to="/albetetek"
-        className="mb-4 inline-flex items-center gap-1 text-sm font-medium text-indigo-600 transition-colors hover:text-indigo-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-indigo-500 dark:text-indigo-400 dark:hover:text-indigo-300"
-      >
-        <svg viewBox="0 0 20 20" fill="currentColor" className="h-4 w-4" aria-hidden="true">
-          <path
-            fillRule="evenodd"
-            d="M14 4.5a.75.75 0 0 0-1.06.02L7.94 9.27a.75.75 0 0 0 0 1.08l4.98 4.75a.75.75 0 1 0 1.04-1.08L9.58 10l4.42-4.44A.75.75 0 0 0 14 4.5Z"
-            clipRule="evenodd"
-          />
-        </svg>
-        Vissza az albetét listához
-      </Link>
+      {mutatVissza && (
+        <Link
+          to="/albetetek"
+          className="mb-4 inline-flex items-center gap-1 text-sm font-medium text-indigo-600 transition-colors hover:text-indigo-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-indigo-500 dark:text-indigo-400 dark:hover:text-indigo-300"
+        >
+          <svg viewBox="0 0 20 20" fill="currentColor" className="h-4 w-4" aria-hidden="true">
+            <path
+              fillRule="evenodd"
+              d="M14 4.5a.75.75 0 0 0-1.06.02L7.94 9.27a.75.75 0 0 0 0 1.08l4.98 4.75a.75.75 0 1 0 1.04-1.08L9.58 10l4.42-4.44A.75.75 0 0 0 14 4.5Z"
+              clipRule="evenodd"
+            />
+          </svg>
+          Vissza az albetét listához
+        </Link>
+      )}
 
       <header className="mb-6">
         <h1 className="text-2xl font-semibold text-slate-900 dark:text-slate-100">

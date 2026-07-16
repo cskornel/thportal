@@ -2,12 +2,14 @@ import { useEffect, useState } from 'react'
 import { Navigate, useParams } from 'react-router-dom'
 import { getAlbetetTetelek } from '../../api/client'
 import { useAdat } from '../../context/AdatContext'
+import { useMunkamenet } from '../../context/MunkamenetContext'
 import type { EgyenlegTetel } from '../../model/albetetek/types'
 import { EgyenlegReszletezo } from './EgyenlegReszletezo'
 
 export function EgyenlegOldal() {
   const { albetetId } = useParams<{ albetetId: string }>()
   const { albetetek, dijfizetokNeve } = useAdat()
+  const { munkamenet } = useMunkamenet()
   const albetet = albetetek.find((a) => String(a.id) === albetetId)
 
   const [tetelek, setTetelek] = useState<EgyenlegTetel[] | null>(null)
@@ -56,6 +58,7 @@ export function EgyenlegOldal() {
       albetet={albetet}
       tetelek={tetelek}
       dijfizeto={dijfizetokNeve(albetet.id)}
+      mutatVissza={munkamenet?.szerep === 'kepviselo'}
     />
   )
 }
