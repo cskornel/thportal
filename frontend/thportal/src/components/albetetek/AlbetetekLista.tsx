@@ -1,8 +1,10 @@
 import { useState } from 'react'
-import { albetetek, lakok } from '../../data/albetetek/mockData'
+import { useAdat } from '../../context/AdatContext'
+import { lakok } from '../../data/albetetek/mockData'
 import { AlbetetSor } from './AlbetetSor'
 
 export function AlbetetekLista() {
+  const { albetetek } = useAdat()
   const [nyitottIdk, setNyitottIdk] = useState<Set<number>>(new Set())
 
   function toggle(id: number) {

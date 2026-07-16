@@ -1,4 +1,4 @@
-export type MenupontId = 'albetetek' | 'uzenofal'
+export type MenupontId = 'albetetek' | 'befizetesek' | 'uzenofal'
 
 export interface Menupont {
   id: MenupontId

@@ -1,4 +1,6 @@
 import { Link } from 'react-router-dom'
+import { tetelHatasa } from '../../context/AdatContext'
+import { dijfizetokNeve } from '../../data/albetetek/mockData'
 import type { Albetet, EgyenlegTetel } from '../../model/albetetek/types'
 
 interface EgyenlegReszletezoProps {
@@ -28,26 +30,32 @@ function egyenlegSzin(egyenleg: number): string {
   return 'text-slate-600 dark:text-slate-300'
 }
 
-function formatHonap(honap: string): string {
-  const datum = new Date(`${honap}-01`)
-  return datum.toLocaleDateString('hu-HU', { year: 'numeric', month: 'long' })
+function formatDatum(iso: string): string {
+  return new Date(iso).toLocaleDateString('hu-HU')
 }
 
-function formatDatum(iso: string | null): string {
-  return iso ? new Date(iso).toLocaleDateString('hu-HU') : '—'
-}
+// Azonos dátumon az előírás kerül előre, majd a befizetés.
+const TIPUS_SORREND: Record<EgyenlegTetel['tipus'], number> = { eloiras: 0, befizetes: 1 }
 
 export function EgyenlegReszletezo({ albetet, tetelek }: EgyenlegReszletezoProps) {
-  const osszesEloiras = tetelek.reduce((osszeg, tetel) => osszeg + tetel.eloiras, 0)
-  const osszesBefizetes = tetelek.reduce((osszeg, tetel) => osszeg + tetel.befizetes, 0)
+  const osszesEloiras = tetelek
+    .filter((tetel) => tetel.tipus === 'eloiras')
+    .reduce((osszeg, tetel) => osszeg + tetel.osszeg, 0)
+  const osszesBefizetes = tetelek
+    .filter((tetel) => tetel.tipus === 'befizetes')
+    .reduce((osszeg, tetel) => osszeg + tetel.osszeg, 0)
   const zaroEgyenleg = osszesBefizetes - osszesEloiras
+  const dijfizeto = dijfizetokNeve(albetet.id)
 
-  // A táblázat soraihoz kiszámítjuk a havi és a görgetett (kumulált) egyenleget.
+  // Dátum szerint rendezve, tételenként kiszámítjuk a görgetett egyenleget.
+  const rendezett = [...tetelek].sort((a, b) => {
+    if (a.datum !== b.datum) return a.datum < b.datum ? -1 : 1
+    return TIPUS_SORREND[a.tipus] - TIPUS_SORREND[b.tipus]
+  })
   let futoEgyenleg = 0
-  const sorok = tetelek.map((tetel) => {
-    const haviEgyenleg = tetel.befizetes - tetel.eloiras
-    futoEgyenleg += haviEgyenleg
-    return { tetel, haviEgyenleg, gorgetettEgyenleg: futoEgyenleg }
+  const sorok = rendezett.map((tetel) => {
+    futoEgyenleg += tetelHatasa(tetel)
+    return { tetel, gorgetettEgyenleg: futoEgyenleg }
   })
 
   return (
@@ -68,11 +76,12 @@ export function EgyenlegReszletezo({ albetet, tetelek }: EgyenlegReszletezoProps
 
       <header className="mb-6">
         <h1 className="text-2xl font-semibold text-slate-900 dark:text-slate-100">
-          Egyenleg részletezése – #{albetet.albetetszam} albetét
+          Folyószámla – #{albetet.albetetszam} albetét
         </h1>
         <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
           {albetet.lepcsohaz} lh. / {albetet.emelet}. em. / {albetet.ajto}. ·{' '}
           {albetet.helyrajziSzam} · {albetet.terulet} m²
+          {dijfizeto && ` – ${dijfizeto}`}
         </p>
       </header>
 
@@ -101,53 +110,71 @@ export function EgyenlegReszletezo({ albetet, tetelek }: EgyenlegReszletezoProps
         <table className="w-full min-w-[720px] text-left text-sm">
           <thead>
             <tr className="border-b border-slate-200 bg-slate-50 text-xs uppercase tracking-wide text-slate-500 dark:border-slate-800 dark:bg-slate-800/50 dark:text-slate-400">
-              <th className="px-4 py-2.5 font-medium">Hónap</th>
-              <th className="px-4 py-2.5 text-right font-medium">Fizetési kötelezettség</th>
+              <th className="px-4 py-2.5 font-medium">Dátum</th>
+              <th className="px-4 py-2.5 font-medium">Megnevezés</th>
+              <th className="px-4 py-2.5 text-right font-medium">Előírás</th>
               <th className="px-4 py-2.5 text-right font-medium">Befizetés</th>
-              <th className="px-4 py-2.5 font-medium">Befizetés dátuma</th>
-              <th className="px-4 py-2.5 text-right font-medium">Havi egyenleg</th>
               <th className="px-4 py-2.5 text-right font-medium">Görgetett egyenleg</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-            {sorok.map(({ tetel, haviEgyenleg, gorgetettEgyenleg }) => (
-              <tr key={tetel.honap}>
-                <td className="px-4 py-3 font-medium text-slate-900 capitalize dark:text-slate-100">
-                  {formatHonap(tetel.honap)}
-                </td>
-                <td className="px-4 py-3 text-right whitespace-nowrap text-slate-700 dark:text-slate-200">
-                  {formatForint(tetel.eloiras)}
-                </td>
-                <td className="px-4 py-3 text-right whitespace-nowrap text-slate-700 dark:text-slate-200">
-                  {tetel.befizetes > 0 ? formatForint(tetel.befizetes) : '—'}
-                </td>
-                <td className="px-4 py-3 whitespace-nowrap text-slate-600 dark:text-slate-300">
-                  {formatDatum(tetel.befizetesDatuma)}
-                </td>
+            {sorok.length === 0 ? (
+              <tr>
                 <td
-                  className={`px-4 py-3 text-right whitespace-nowrap font-medium ${egyenlegSzin(haviEgyenleg)}`}
+                  colSpan={5}
+                  className="px-4 py-6 text-center text-slate-500 dark:text-slate-400"
                 >
-                  {formatEgyenleg(haviEgyenleg)}
-                </td>
-                <td
-                  className={`px-4 py-3 text-right whitespace-nowrap font-medium ${egyenlegSzin(gorgetettEgyenleg)}`}
-                >
-                  {formatEgyenleg(gorgetettEgyenleg)}
+                  Ehhez az albetéthez még nincs folyószámla-tétel.
                 </td>
               </tr>
-            ))}
+            ) : (
+              sorok.map(({ tetel, gorgetettEgyenleg }) => (
+                <tr key={tetel.id}>
+                  <td className="px-4 py-3 whitespace-nowrap text-slate-600 dark:text-slate-300">
+                    {formatDatum(tetel.datum)}
+                  </td>
+                  <td className="px-4 py-3">
+                    <span
+                      className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${
+                        tetel.tipus === 'eloiras'
+                          ? 'bg-red-100 text-red-700 dark:bg-red-500/10 dark:text-red-300'
+                          : 'bg-green-100 text-green-700 dark:bg-green-500/10 dark:text-green-300'
+                      }`}
+                    >
+                      {tetel.tipus === 'eloiras' ? 'Előírás' : 'Befizetés'}
+                    </span>
+                    {tetel.megjegyzes && (
+                      <span className="ml-2 text-slate-500 dark:text-slate-400">
+                        {tetel.megjegyzes}
+                      </span>
+                    )}
+                  </td>
+                  <td className="px-4 py-3 text-right whitespace-nowrap text-slate-700 dark:text-slate-200">
+                    {tetel.tipus === 'eloiras' ? formatForint(tetel.osszeg) : '—'}
+                  </td>
+                  <td className="px-4 py-3 text-right whitespace-nowrap text-slate-700 dark:text-slate-200">
+                    {tetel.tipus === 'befizetes' ? formatForint(tetel.osszeg) : '—'}
+                  </td>
+                  <td
+                    className={`px-4 py-3 text-right whitespace-nowrap font-medium ${egyenlegSzin(gorgetettEgyenleg)}`}
+                  >
+                    {formatEgyenleg(gorgetettEgyenleg)}
+                  </td>
+                </tr>
+              ))
+            )}
           </tbody>
           <tfoot>
             <tr className="border-t border-slate-200 bg-slate-50 font-semibold dark:border-slate-800 dark:bg-slate-800/50">
-              <td className="px-4 py-3 text-slate-900 dark:text-slate-100">Összesen</td>
+              <td className="px-4 py-3 text-slate-900 dark:text-slate-100" colSpan={2}>
+                Összesen
+              </td>
               <td className="px-4 py-3 text-right whitespace-nowrap text-slate-900 dark:text-slate-100">
                 {formatForint(osszesEloiras)}
               </td>
               <td className="px-4 py-3 text-right whitespace-nowrap text-slate-900 dark:text-slate-100">
                 {formatForint(osszesBefizetes)}
               </td>
-              <td className="px-4 py-3" />
-              <td className="px-4 py-3" />
               <td className={`px-4 py-3 text-right whitespace-nowrap ${egyenlegSzin(zaroEgyenleg)}`}>
                 {formatEgyenleg(zaroEgyenleg)}
               </td>

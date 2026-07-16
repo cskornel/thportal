@@ -1,8 +1,9 @@
 import type { Albetet, EgyenlegTetel, Lako } from '../../model/albetetek/types'
 
-// Az egyenleg értékét nem itt rögzítjük, hanem a havi tételekből számítjuk
-// (lásd lentebb az `albetetek` exportot), így a lista és a részletező mindig egyezik.
-const albetetekBazis: Albetet[] = [
+// Az egyenleg értékét nem itt rögzítjük, hanem a folyószámla tételeiből számítjuk.
+// A `bazis` albetétek egyenlege ezért 0; a tényleges egyenleget az AdatProvider
+// képezi a tételekből, így a lista és a folyószámla mindig egyezik.
+export const albetetekBazis: Albetet[] = [
   { id: 1, lepcsohaz: 'A', emelet: 0, ajto: '1', albetetszam: 1, helyrajziSzam: '3241/A/1', terulet: 54, szoba: 2, felszoba: 0, tulajdoniJogviszony: 'Magántulajdon', tulajdoniHanyad: '736/10000', egyenleg: 0 },
   { id: 2, lepcsohaz: 'A', emelet: 0, ajto: '2', albetetszam: 2, helyrajziSzam: '3241/A/2', terulet: 48, szoba: 1, felszoba: 1, tulajdoniJogviszony: 'Magántulajdon', tulajdoniHanyad: '654/10000', egyenleg: 0 },
   { id: 3, lepcsohaz: 'A', emelet: 1, ajto: '3', albetetszam: 3, helyrajziSzam: '3241/A/3', terulet: 62, szoba: 2, felszoba: 1, tulajdoniJogviszony: 'Önkormányzati', tulajdoniHanyad: '845/10000', egyenleg: 0 },
@@ -34,47 +35,60 @@ function haviKozosKoltseg(terulet: number): number {
 }
 
 // Az albetétenként eltérő fizetési viselkedést az id-ból származó profil adja,
-// hogy legyen rendezett, tartozó és túlfizető albetét is a mintában.
+// hogy legyen rendezett, tartozó és túlfizető albetét is a mintában. Havonta egy
+// előírás és (ha volt fizetés) egy befizetés tétel keletkezik.
 function egyenlegTetelekGeneralasa(albetet: Albetet): EgyenlegTetel[] {
-  const eloiras = haviKozosKoltseg(albetet.terulet)
+  const dij = haviKozosKoltseg(albetet.terulet)
   const profil = albetet.id % 4
   const fizetesiNap = 8 + (albetet.id % 5)
   const utolsoIndex = EGYENLEG_HONAPOK.length - 1
+  const tetelek: EgyenlegTetel[] = []
 
-  return EGYENLEG_HONAPOK.map((honap, index) => {
-    let befizetes = eloiras
+  EGYENLEG_HONAPOK.forEach((honap, index) => {
+    tetelek.push({
+      id: `seed-elo-${albetet.id}-${honap}`,
+      albetetId: albetet.id,
+      tipus: 'eloiras',
+      datum: `${honap}-01`,
+      osszeg: dij,
+      megjegyzes: 'Havi közös költség előírás',
+    })
+
+    let befizetes = dij
     if (profil === 1 && index === utolsoIndex) {
       befizetes = 0 // az utolsó havi díj még nincs rendezve → tartozás
     } else if (profil === 2 && index === utolsoIndex - 1) {
-      befizetes = eloiras * 2 // egy hónapban duplán fizetett → túlfizetés
+      befizetes = dij * 2 // egy hónapban duplán fizetett → túlfizetés
     } else if (profil === 3 && index === utolsoIndex) {
-      befizetes = Math.round(eloiras / 2 / 100) * 100 // részleges befizetés
+      befizetes = Math.round(dij / 2 / 100) * 100 // részleges befizetés
     }
 
-    return {
-      albetetId: albetet.id,
-      honap,
-      eloiras,
-      befizetes,
-      befizetesDatuma:
-        befizetes > 0 ? `${honap}-${String(fizetesiNap).padStart(2, '0')}` : null,
+    if (befizetes > 0) {
+      tetelek.push({
+        id: `seed-bef-${albetet.id}-${honap}`,
+        albetetId: albetet.id,
+        tipus: 'befizetes',
+        datum: `${honap}-${String(fizetesiNap).padStart(2, '0')}`,
+        osszeg: befizetes,
+        megjegyzes: 'Közös költség befizetés',
+      })
     }
   })
+
+  return tetelek
 }
 
-export const egyenlegTetelek: EgyenlegTetel[] =
+/** A folyószámla kiinduló (mintaadat) tételei. A tényleges, frissülő állapotot
+ *  az AdatProvider kezeli. */
+export const kezdetiEgyenlegTetelek: EgyenlegTetel[] =
   albetetekBazis.flatMap(egyenlegTetelekGeneralasa)
 
-// Az egyenleg a havi tételekből számított érték (befizetés − előírás összege).
-export const albetetek: Albetet[] = albetetekBazis.map((albetet) => ({
-  ...albetet,
-  egyenleg: egyenlegTetelek
-    .filter((tetel) => tetel.albetetId === albetet.id)
-    .reduce((osszeg, tetel) => osszeg + tetel.befizetes - tetel.eloiras, 0),
-}))
-
-export function egyenlegTetelekAlbetethez(albetetId: number): EgyenlegTetel[] {
-  return egyenlegTetelek.filter((tetel) => tetel.albetetId === albetetId)
+/** Az albetéthez tartozó díjfizető(k) neve, vesszővel elválasztva. */
+export function dijfizetokNeve(albetetId: number): string {
+  return lakok
+    .filter((lako) => lako.albetetId === albetetId && lako.dijfizeto)
+    .map((lako) => lako.nev)
+    .join(', ')
 }
 
 export const lakok: Lako[] = [

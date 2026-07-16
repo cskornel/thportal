@@ -16,16 +16,19 @@ export interface Lako {
   dijfizeto: boolean
 }
 
+/** A rögzítés típusa: az albetéthez befizetést vagy előírást könyvelünk. */
+export type RogzitesTipus = 'befizetes' | 'eloiras'
+
+/** A folyószámla egy tétele: egy előírás vagy egy befizetés adott dátummal. */
 export interface EgyenlegTetel {
+  id: string
   albetetId: number
-  /** A hónap 'YYYY-MM' formátumban. */
-  honap: string
-  /** Az adott havi fizetési kötelezettség (előírás) forintban. */
-  eloiras: number
-  /** Az adott hónapra ténylegesen befizetett összeg forintban. */
-  befizetes: number
-  /** A befizetés dátuma ISO formátumban, vagy null, ha nem történt befizetés. */
-  befizetesDatuma: string | null
+  tipus: RogzitesTipus
+  /** A tétel dátuma ISO formátumban ('YYYY-MM-DD'). */
+  datum: string
+  /** A tétel összege forintban (mindig pozitív). */
+  osszeg: number
+  megjegyzes?: string
 }
 
 export interface Albetet {
