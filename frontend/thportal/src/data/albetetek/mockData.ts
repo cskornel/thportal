@@ -1,19 +1,81 @@
-import type { Albetet, Lako } from '../../model/albetetek/types'
+import type { Albetet, EgyenlegTetel, Lako } from '../../model/albetetek/types'
 
-export const albetetek: Albetet[] = [
+// Az egyenleg értékét nem itt rögzítjük, hanem a havi tételekből számítjuk
+// (lásd lentebb az `albetetek` exportot), így a lista és a részletező mindig egyezik.
+const albetetekBazis: Albetet[] = [
   { id: 1, lepcsohaz: 'A', emelet: 0, ajto: '1', albetetszam: 1, helyrajziSzam: '3241/A/1', terulet: 54, szoba: 2, felszoba: 0, tulajdoniJogviszony: 'Magántulajdon', tulajdoniHanyad: '736/10000', egyenleg: 0 },
-  { id: 2, lepcsohaz: 'A', emelet: 0, ajto: '2', albetetszam: 2, helyrajziSzam: '3241/A/2', terulet: 48, szoba: 1, felszoba: 1, tulajdoniJogviszony: 'Magántulajdon', tulajdoniHanyad: '654/10000', egyenleg: -45200 },
-  { id: 3, lepcsohaz: 'A', emelet: 1, ajto: '3', albetetszam: 3, helyrajziSzam: '3241/A/3', terulet: 62, szoba: 2, felszoba: 1, tulajdoniJogviszony: 'Önkormányzati', tulajdoniHanyad: '845/10000', egyenleg: 12800 },
+  { id: 2, lepcsohaz: 'A', emelet: 0, ajto: '2', albetetszam: 2, helyrajziSzam: '3241/A/2', terulet: 48, szoba: 1, felszoba: 1, tulajdoniJogviszony: 'Magántulajdon', tulajdoniHanyad: '654/10000', egyenleg: 0 },
+  { id: 3, lepcsohaz: 'A', emelet: 1, ajto: '3', albetetszam: 3, helyrajziSzam: '3241/A/3', terulet: 62, szoba: 2, felszoba: 1, tulajdoniJogviszony: 'Önkormányzati', tulajdoniHanyad: '845/10000', egyenleg: 0 },
   { id: 4, lepcsohaz: 'A', emelet: 1, ajto: '4', albetetszam: 4, helyrajziSzam: '3241/A/4', terulet: 71, szoba: 3, felszoba: 0, tulajdoniJogviszony: 'Magántulajdon', tulajdoniHanyad: '967/10000', egyenleg: 0 },
-  { id: 5, lepcsohaz: 'A', emelet: 2, ajto: '5', albetetszam: 5, helyrajziSzam: '3241/A/5', terulet: 54, szoba: 2, felszoba: 0, tulajdoniJogviszony: 'Önkormányzati', tulajdoniHanyad: '736/10000', egyenleg: -128500 },
-  { id: 6, lepcsohaz: 'B', emelet: 0, ajto: '1', albetetszam: 6, helyrajziSzam: '3241/A/6', terulet: 48, szoba: 1, felszoba: 1, tulajdoniJogviszony: 'Magántulajdon', tulajdoniHanyad: '654/10000', egyenleg: 6400 },
+  { id: 5, lepcsohaz: 'A', emelet: 2, ajto: '5', albetetszam: 5, helyrajziSzam: '3241/A/5', terulet: 54, szoba: 2, felszoba: 0, tulajdoniJogviszony: 'Önkormányzati', tulajdoniHanyad: '736/10000', egyenleg: 0 },
+  { id: 6, lepcsohaz: 'B', emelet: 0, ajto: '1', albetetszam: 6, helyrajziSzam: '3241/A/6', terulet: 48, szoba: 1, felszoba: 1, tulajdoniJogviszony: 'Magántulajdon', tulajdoniHanyad: '654/10000', egyenleg: 0 },
   { id: 7, lepcsohaz: 'B', emelet: 0, ajto: '2', albetetszam: 7, helyrajziSzam: '3241/A/7', terulet: 65, szoba: 2, felszoba: 1, tulajdoniJogviszony: 'Magántulajdon', tulajdoniHanyad: '886/10000', egyenleg: 0 },
-  { id: 8, lepcsohaz: 'B', emelet: 1, ajto: '3', albetetszam: 8, helyrajziSzam: '3241/A/8', terulet: 78, szoba: 3, felszoba: 1, tulajdoniJogviszony: 'Magántulajdon', tulajdoniHanyad: '1063/10000', egyenleg: -23750 },
-  { id: 9, lepcsohaz: 'B', emelet: 2, ajto: '4', albetetszam: 9, helyrajziSzam: '3241/A/9', terulet: 54, szoba: 2, felszoba: 0, tulajdoniJogviszony: 'Magántulajdon', tulajdoniHanyad: '736/10000', egyenleg: 34100 },
-  { id: 10, lepcsohaz: 'C', emelet: 0, ajto: '1', albetetszam: 10, helyrajziSzam: '3241/A/10', terulet: 92, szoba: 3, felszoba: 1, tulajdoniJogviszony: 'Önkormányzati', tulajdoniHanyad: '1253/10000', egyenleg: -312000 },
+  { id: 8, lepcsohaz: 'B', emelet: 1, ajto: '3', albetetszam: 8, helyrajziSzam: '3241/A/8', terulet: 78, szoba: 3, felszoba: 1, tulajdoniJogviszony: 'Magántulajdon', tulajdoniHanyad: '1063/10000', egyenleg: 0 },
+  { id: 9, lepcsohaz: 'B', emelet: 2, ajto: '4', albetetszam: 9, helyrajziSzam: '3241/A/9', terulet: 54, szoba: 2, felszoba: 0, tulajdoniJogviszony: 'Magántulajdon', tulajdoniHanyad: '736/10000', egyenleg: 0 },
+  { id: 10, lepcsohaz: 'C', emelet: 0, ajto: '1', albetetszam: 10, helyrajziSzam: '3241/A/10', terulet: 92, szoba: 3, felszoba: 1, tulajdoniJogviszony: 'Önkormányzati', tulajdoniHanyad: '1253/10000', egyenleg: 0 },
   { id: 11, lepcsohaz: 'C', emelet: 1, ajto: '2', albetetszam: 11, helyrajziSzam: '3241/A/11', terulet: 48, szoba: 1, felszoba: 1, tulajdoniJogviszony: 'Magántulajdon', tulajdoniHanyad: '654/10000', egyenleg: 0 },
-  { id: 12, lepcsohaz: 'C', emelet: 2, ajto: '3', albetetszam: 12, helyrajziSzam: '3241/A/12', terulet: 60, szoba: 2, felszoba: 1, tulajdoniJogviszony: 'Magántulajdon', tulajdoniHanyad: '816/10000', egyenleg: 9200 },
+  { id: 12, lepcsohaz: 'C', emelet: 2, ajto: '3', albetetszam: 12, helyrajziSzam: '3241/A/12', terulet: 60, szoba: 2, felszoba: 1, tulajdoniJogviszony: 'Magántulajdon', tulajdoniHanyad: '816/10000', egyenleg: 0 },
 ]
+
+// A 2026-os költségvetési év eddig eltelt hónapjai (a mai dátum: 2026-07-16).
+const EGYENLEG_HONAPOK = [
+  '2026-01',
+  '2026-02',
+  '2026-03',
+  '2026-04',
+  '2026-05',
+  '2026-06',
+  '2026-07',
+]
+
+/** Havi közös költség előírás az alapterület alapján, 100 Ft-ra kerekítve. */
+function haviKozosKoltseg(terulet: number): number {
+  return Math.round((terulet * 320) / 100) * 100
+}
+
+// Az albetétenként eltérő fizetési viselkedést az id-ból származó profil adja,
+// hogy legyen rendezett, tartozó és túlfizető albetét is a mintában.
+function egyenlegTetelekGeneralasa(albetet: Albetet): EgyenlegTetel[] {
+  const eloiras = haviKozosKoltseg(albetet.terulet)
+  const profil = albetet.id % 4
+  const fizetesiNap = 8 + (albetet.id % 5)
+  const utolsoIndex = EGYENLEG_HONAPOK.length - 1
+
+  return EGYENLEG_HONAPOK.map((honap, index) => {
+    let befizetes = eloiras
+    if (profil === 1 && index === utolsoIndex) {
+      befizetes = 0 // az utolsó havi díj még nincs rendezve → tartozás
+    } else if (profil === 2 && index === utolsoIndex - 1) {
+      befizetes = eloiras * 2 // egy hónapban duplán fizetett → túlfizetés
+    } else if (profil === 3 && index === utolsoIndex) {
+      befizetes = Math.round(eloiras / 2 / 100) * 100 // részleges befizetés
+    }
+
+    return {
+      albetetId: albetet.id,
+      honap,
+      eloiras,
+      befizetes,
+      befizetesDatuma:
+        befizetes > 0 ? `${honap}-${String(fizetesiNap).padStart(2, '0')}` : null,
+    }
+  })
+}
+
+export const egyenlegTetelek: EgyenlegTetel[] =
+  albetetekBazis.flatMap(egyenlegTetelekGeneralasa)
+
+// Az egyenleg a havi tételekből számított érték (befizetés − előírás összege).
+export const albetetek: Albetet[] = albetetekBazis.map((albetet) => ({
+  ...albetet,
+  egyenleg: egyenlegTetelek
+    .filter((tetel) => tetel.albetetId === albetet.id)
+    .reduce((osszeg, tetel) => osszeg + tetel.befizetes - tetel.eloiras, 0),
+}))
+
+export function egyenlegTetelekAlbetethez(albetetId: number): EgyenlegTetel[] {
+  return egyenlegTetelek.filter((tetel) => tetel.albetetId === albetetId)
+}
 
 export const lakok: Lako[] = [
   { id: 101, albetetId: 1, nev: 'Kovács János', jogviszonyok: ['Tulajdonos'], tulajdonosiHanyad: 100, jogviszonyKezdete: '2018-03-12', emailCim: 'kovacs.janos@example.com', mobilszam: '+36 20 111 2233', dijfizeto: true },
