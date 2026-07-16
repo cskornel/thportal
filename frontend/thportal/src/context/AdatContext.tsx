@@ -1,7 +1,9 @@
 import { createContext, useCallback, useContext, useMemo, useRef, useState } from 'react'
 import type { ReactNode } from 'react'
 import { albetetekBazis, kezdetiEgyenlegTetelek } from '../data/albetetek/mockData'
+import { kezdetiHirdetmenyek } from '../data/uzenofal/mockData'
 import type { Albetet, EgyenlegTetel, RogzitesTipus } from '../model/albetetek/types'
+import type { Hirdetmeny } from '../model/uzenofal/types'
 
 export interface UjTetel {
   albetetId: number
@@ -11,10 +13,17 @@ export interface UjTetel {
   megjegyzes?: string
 }
 
+/** Hirdetmény adatai azonosító nélkül (új rögzítéshez és módosításhoz). */
+export type HirdetmenyAdat = Omit<Hirdetmeny, 'id'>
+
 interface AdatContextErtek {
   albetetek: Albetet[]
   egyenlegTetelekAlbetethez: (albetetId: number) => EgyenlegTetel[]
   tetelHozzaadasa: (ujTetel: UjTetel) => void
+  hirdetmenyek: Hirdetmeny[]
+  hirdetmenyHozzaadasa: (adat: HirdetmenyAdat) => void
+  hirdetmenyModositasa: (id: string, adat: HirdetmenyAdat) => void
+  hirdetmenyTorlese: (id: string) => void
 }
 
 const AdatContext = createContext<AdatContextErtek | null>(null)
@@ -59,9 +68,45 @@ export function AdatProvider({ children }: { children: ReactNode }) {
     ])
   }, [])
 
+  const [hirdetmenyek, setHirdetmenyek] = useState<Hirdetmeny[]>(kezdetiHirdetmenyek)
+  const kovetkezoHirdetmenyId = useRef(1)
+
+  const hirdetmenyHozzaadasa = useCallback((adat: HirdetmenyAdat) => {
+    setHirdetmenyek((elozo) => [
+      ...elozo,
+      { id: `hird-${kovetkezoHirdetmenyId.current++}`, ...adat },
+    ])
+  }, [])
+
+  const hirdetmenyModositasa = useCallback((id: string, adat: HirdetmenyAdat) => {
+    setHirdetmenyek((elozo) =>
+      elozo.map((hirdetmeny) => (hirdetmeny.id === id ? { id, ...adat } : hirdetmeny)),
+    )
+  }, [])
+
+  const hirdetmenyTorlese = useCallback((id: string) => {
+    setHirdetmenyek((elozo) => elozo.filter((hirdetmeny) => hirdetmeny.id !== id))
+  }, [])
+
   const ertek = useMemo<AdatContextErtek>(
-    () => ({ albetetek, egyenlegTetelekAlbetethez, tetelHozzaadasa }),
-    [albetetek, egyenlegTetelekAlbetethez, tetelHozzaadasa],
+    () => ({
+      albetetek,
+      egyenlegTetelekAlbetethez,
+      tetelHozzaadasa,
+      hirdetmenyek,
+      hirdetmenyHozzaadasa,
+      hirdetmenyModositasa,
+      hirdetmenyTorlese,
+    }),
+    [
+      albetetek,
+      egyenlegTetelekAlbetethez,
+      tetelHozzaadasa,
+      hirdetmenyek,
+      hirdetmenyHozzaadasa,
+      hirdetmenyModositasa,
+      hirdetmenyTorlese,
+    ],
   )
 
   return <AdatContext.Provider value={ertek}>{children}</AdatContext.Provider>
