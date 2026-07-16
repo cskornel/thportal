@@ -1,6 +1,5 @@
 import { useState } from 'react'
 import { useAdat } from '../../context/AdatContext'
-import { aktualisFelhasznalo } from '../../data/tarsashaz/mockData'
 import { HIRDETMENY_KATEGORIAK } from '../../model/uzenofal/types'
 import type { HirdetmenyKategoria, HirdetmenyLathatosag } from '../../model/uzenofal/types'
 import { HirdetmenyForm } from './HirdetmenyForm'
@@ -27,7 +26,13 @@ function formatDatum(iso: string): string {
 }
 
 export function Uzenofal() {
-  const { hirdetmenyek, hirdetmenyHozzaadasa, hirdetmenyModositasa, hirdetmenyTorlese } = useAdat()
+  const {
+    hirdetmenyek,
+    hirdetmenyHozzaadasa,
+    hirdetmenyModositasa,
+    hirdetmenyTorlese,
+    felhasznalo,
+  } = useAdat()
   const [urlapNyitva, setUrlapNyitva] = useState(false)
   const [szerkesztettId, setSzerkesztettId] = useState<string | null>(null)
   const [nyitottLeirasok, setNyitottLeirasok] = useState<Set<string>>(new Set())
@@ -75,11 +80,11 @@ export function Uzenofal() {
     setSzerkesztettId(null)
   }
 
-  function ment(ertek: HirdetmenyUrlapErtek) {
+  async function ment(ertek: HirdetmenyUrlapErtek) {
     const kategoria = ertek.kategoria as HirdetmenyKategoria
     if (szerkesztett) {
       // Módosításkor az eredeti rögzítő megmarad.
-      hirdetmenyModositasa(szerkesztett.id, {
+      await hirdetmenyModositasa(szerkesztett.id, {
         ...ertek,
         kategoria,
         rogzitoNev: szerkesztett.rogzitoNev,
@@ -87,19 +92,19 @@ export function Uzenofal() {
       })
     } else {
       // Új hirdetmény rögzítője a bejelentkezett felhasználó.
-      hirdetmenyHozzaadasa({
+      await hirdetmenyHozzaadasa({
         ...ertek,
         kategoria,
-        rogzitoNev: aktualisFelhasznalo.nev,
-        rogzitoSzerepkor: aktualisFelhasznalo.szerepkor,
+        rogzitoNev: felhasznalo.nev,
+        rogzitoSzerepkor: felhasznalo.szerepkor,
       })
     }
     bezar()
   }
 
-  function torol(id: string) {
+  async function torol(id: string) {
     if (window.confirm('Biztosan törlöd ezt a hirdetményt?')) {
-      hirdetmenyTorlese(id)
+      await hirdetmenyTorlese(id)
     }
   }
 

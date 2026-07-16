@@ -1,18 +1,19 @@
 import { Outlet } from 'react-router-dom'
-import { aktualisFelhasznalo, aktualisKoltsegvetesiEv, tarsashaz } from '../../data/tarsashaz/mockData'
+import { useAdat } from '../../context/AdatContext'
 import { useTema } from '../../hooks/useTema'
 import { Fejlec } from './Fejlec'
 import { Oldalsav } from './Oldalsav'
 
 export function MainLayout() {
   const { tema, valt } = useTema()
+  const { tarsashaz, felhasznalo, koltsegvetesiEv } = useAdat()
 
   return (
     <div className="flex min-h-screen flex-col bg-slate-50 dark:bg-slate-950">
       <Fejlec
         tarsashaz={tarsashaz}
-        felhasznalo={aktualisFelhasznalo}
-        koltsegvetesiEv={aktualisKoltsegvetesiEv}
+        felhasznalo={felhasznalo}
+        koltsegvetesiEv={koltsegvetesiEv}
         tema={tema}
         onTemaValt={valt}
       />

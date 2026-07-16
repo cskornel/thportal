@@ -1,11 +1,11 @@
 import { Link } from 'react-router-dom'
 import { tetelHatasa } from '../../context/AdatContext'
-import { dijfizetokNeve } from '../../data/albetetek/mockData'
 import type { Albetet, EgyenlegTetel } from '../../model/albetetek/types'
 
 interface EgyenlegReszletezoProps {
   albetet: Albetet
   tetelek: EgyenlegTetel[]
+  dijfizeto: string
 }
 
 const forintFormatter = new Intl.NumberFormat('hu-HU', {
@@ -37,7 +37,7 @@ function formatDatum(iso: string): string {
 // Azonos dátumon az előírás kerül előre, majd a befizetés.
 const TIPUS_SORREND: Record<EgyenlegTetel['tipus'], number> = { eloiras: 0, befizetes: 1 }
 
-export function EgyenlegReszletezo({ albetet, tetelek }: EgyenlegReszletezoProps) {
+export function EgyenlegReszletezo({ albetet, tetelek, dijfizeto }: EgyenlegReszletezoProps) {
   const osszesEloiras = tetelek
     .filter((tetel) => tetel.tipus === 'eloiras')
     .reduce((osszeg, tetel) => osszeg + tetel.osszeg, 0)
@@ -45,7 +45,6 @@ export function EgyenlegReszletezo({ albetet, tetelek }: EgyenlegReszletezoProps
     .filter((tetel) => tetel.tipus === 'befizetes')
     .reduce((osszeg, tetel) => osszeg + tetel.osszeg, 0)
   const zaroEgyenleg = osszesBefizetes - osszesEloiras
-  const dijfizeto = dijfizetokNeve(albetet.id)
 
   // Dátum szerint rendezve, tételenként kiszámítjuk a görgetett egyenleget.
   const rendezett = [...tetelek].sort((a, b) => {

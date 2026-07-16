@@ -2,7 +2,6 @@ import { useForm } from '@tanstack/react-form'
 import { useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { useAdat } from '../../context/AdatContext'
-import { dijfizetokNeve } from '../../data/albetetek/mockData'
 import type { Albetet, RogzitesTipus } from '../../model/albetetek/types'
 
 const forintFormatter = new Intl.NumberFormat('hu-HU', {
@@ -28,8 +27,7 @@ function egyenlegSzin(egyenleg: number): string {
 }
 
 /** A legördülő opció felirata: az albetét azonosítója és a díjfizető neve kötőjellel. */
-function albetetOpcioCimke(albetet: Albetet): string {
-  const dijfizeto = dijfizetokNeve(albetet.id)
+function albetetOpcioCimke(albetet: Albetet, dijfizeto: string): string {
   return dijfizeto ? `${albetetCimke(albetet)} – ${dijfizeto}` : albetetCimke(albetet)
 }
 
@@ -49,7 +47,7 @@ interface Nyugta {
 }
 
 export function BefizetesekOldal() {
-  const { albetetek, tetelHozzaadasa } = useAdat()
+  const { albetetek, tetelHozzaadasa, dijfizetokNeve } = useAdat()
   const navigate = useNavigate()
   const [nyugta, setNyugta] = useState<Nyugta | null>(null)
 
@@ -67,7 +65,7 @@ export function BefizetesekOldal() {
       const osszeg = Number(value.osszeg)
       const megjegyzes = value.megjegyzes.trim()
 
-      tetelHozzaadasa({
+      await tetelHozzaadasa({
         albetetId,
         tipus: value.tipus,
         datum: value.datum,
@@ -159,7 +157,7 @@ export function BefizetesekOldal() {
                 <option value="">Válassz albetétet…</option>
                 {albetetek.map((albetet) => (
                   <option key={albetet.id} value={String(albetet.id)}>
-                    {albetetOpcioCimke(albetet)}
+                    {albetetOpcioCimke(albetet, dijfizetokNeve(albetet.id))}
                   </option>
                 ))}
               </select>

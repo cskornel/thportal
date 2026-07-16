@@ -13,7 +13,7 @@ export interface HirdetmenyUrlapErtek {
 interface HirdetmenyFormProps {
   kezdoErtek: HirdetmenyUrlapErtek
   szerkesztes: boolean
-  onMentes: (ertek: HirdetmenyUrlapErtek) => void
+  onMentes: (ertek: HirdetmenyUrlapErtek) => void | Promise<void>
   onMegse: () => void
 }
 
@@ -31,7 +31,7 @@ export function HirdetmenyForm({
   const form = useForm({
     defaultValues: kezdoErtek,
     onSubmit: async ({ value }) => {
-      onMentes(value)
+      await onMentes(value)
     },
   })
 
